@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('bilyeo.urls')),
+    path('account/', include('account.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
     path('google/', include('allauth.urls')),
 ]

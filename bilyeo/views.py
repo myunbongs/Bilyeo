@@ -1,6 +1,8 @@
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import ListView, FormView, View
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+from django.views.generic import ListView, View
 from bilyeo.models import Stuff, Rental, Category
 from bilyeo.forms import AvailabilityForm, AcceptForm, StuffForm, StuffAvailableForm
 from bilyeo.rental_functions.cal_rental_fee import find_total_rental_fee
@@ -16,6 +18,7 @@ def index(request):
     }
     return render(request, 'bilyeo/index.html', context)
 
+@method_decorator(login_required, name="dispatch")
 class StuffCreateView(View):
     def get(self, request, *args, **kwargs):
         category_list = Category.objects.all()
@@ -42,9 +45,10 @@ class StuffCreateView(View):
             stuff.save()
             return redirect('bilyeo:stuff_detail', pk=stuff.pk)
         else:
-            return HttpResponse('해당 물품을 등록할 수 없습니다. 유효한 입력으로 시도해주세요. :)')
-        return HttpResponse('유효하지 않은 전송입니다. :(')
-
+            return HttpResponse(
+                "<script>alert('해당 물품을 등록할 수 없습니다. 유효한 입력으로 시도해주세요. :)');location.href='/stuff_list/';</script>")
+        return HttpResponse(
+            "<script>alert('유효하지 않은 전송입니다. :(');location.href='/stuff_list/';</script>")
 
 class StuffList(ListView):
     model = Stuff
@@ -54,7 +58,7 @@ class StuffList(ListView):
         context['category_list'] = Category.objects.all()
         return context
 
-
+@method_decorator(login_required, name="dispatch")
 class StuffDetailView(View):
     def get(self, request, *args, **kwargs):
         stuff = get_object_or_404(Stuff, pk=self.kwargs['pk'])
@@ -96,13 +100,13 @@ class StuffDetailView(View):
                 rental.save()
                 return redirect('bilyeo:rental_detail', pk=rental.pk)
             else:
-
                 return HttpResponse(
                     "<script>alert('해당 물품은 이미 예약되었습니다! 다른 물품으로 시도해주세요. :)');location.href='/stuff_list/';</script>")
 
         return HttpResponse(
             "<script>alert('유효하지 않은 전송입니다. :(');location.href='/stuff_list/';</script>")
 
+@method_decorator(login_required, name="dispatch")
 class RentalDetailView(View):
     def get(self, request, *args, **kwargs):
         rental = get_object_or_404(Rental, pk=self.kwargs['pk'])
@@ -134,6 +138,7 @@ class RentalDetailView(View):
         return HttpResponse(
             "<script>alert('상태 변경에 실패했습니다! 유효한 입력으로 시도해주세요. :)');location.href='/rental/';" + rental.pk + "</script>")
 
+@method_decorator(login_required, name="dispatch")
 class MyRentalListView(View):
     def get(self, request, *args, **kwargs):
         user = self.request.user
@@ -146,7 +151,7 @@ class MyRentalListView(View):
         }
         return render(request, 'bilyeo/my_rental_list.html', context)
 
-
+@method_decorator(login_required, name="dispatch")
 class MyStuffListView(View):
     def get(self, request, *args, **kwargs):
         user = self.request.user
