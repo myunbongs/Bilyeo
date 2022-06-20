@@ -1,0 +1,51 @@
+{% extends "bilyeo/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Rental Detail{% endblock %}
+
+{% block style %}
+<style>
+</style>
+{% endblock %}
+
+{% block content %}
+    </br>
+    <h1>Rental Detail</h1>
+    <hr/>
+    <div class="container">
+      <div class="row">
+          <div class="col">
+            {% if rental.stuff.image %}
+                <img src ="{{ rental.stuff.image.url }}" alt = "{{ stuff.image}}" width="400em">
+            {% endif %}
+
+          </div>
+          <div class="col">
+            <h3>제품명: {{ rental.stuff.name }}</h3>
+              <hr/>
+            <p>작성자: {{ rental.stuff.author.username }}</p>
+            <p>대여자: {{ rental.user.username }}</p>
+
+            <p>대여일자: {{ rental.rental_date }}</p>
+            <p>반납일자: {{ rental.return_date }}</p>
+
+            <p>총액: {{ rental.total_fee }}원</p>
+            <p>상태: {{ rental.get_status_display }}</p>
+
+            <p>내용: {{ rental.stuff.desc }}</p>
+    {% if rental.stuff.author == request.user %}
+              <hr />
+
+      <form action="" method="POST">
+          {{ form | crispy }}
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary mb-3" style="background-color: #0E207F">상태 변경</button>
+      </form>
+    {% endif %}
+          </div>
+      </div>
+    </div>
+
+</br>
+{% endblock %}

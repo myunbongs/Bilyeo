@@ -1,0 +1,28 @@
+{% extends "bilyeo/base.html" %}
+{% load static %}
+
+{% block title %}My Rental List{% endblock %}
+
+{% block content %}
+    <br/>
+    <div class='container'>
+        <div class="row row-cols-6">
+            {%  for my_rental in my_rental_list %}
+            <div class="col">
+                <div class="card" style="width: 18rem;">
+                  <img src ="{{ my_rental.stuff.image.url }}" alt = "{{ my_rental.stuff.image }}">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ my_rental.stuff.name }}</h5>
+                    <p class="card-text">{{ my_rental.stuff.desc |truncatechars:30 }}</p>
+                    <a href="{% url 'bilyeo:rental_detail' pk=my_rental.pk %}" class="btn btn-primary" style="background-color: #0E207F">자세히 보기</a>
+                  </div>
+                </div>
+            <br/>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <br/>
+{% endblock %}
+

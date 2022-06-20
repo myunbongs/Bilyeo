@@ -1,0 +1,63 @@
+{% extends "bilyeo/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Stuff Detail{% endblock %}
+
+{% block content %}
+    </br>
+
+    <h1>Stuff Detail</h1>
+    <hr/>
+    <div class="container">
+      <div class="row">
+          <div class="col">
+            {% if stuff.image %}
+              <img src ="{{ stuff.image.url }}" alt = "{{ stuff.image }}" width="400em">
+            {% endif %}
+          </div>
+          <div class="col">
+
+            <h3>제품명: {{ stuff.name }}</h3>
+              <hr/>
+            <p>작성자: {{ stuff.author.username }}</p>
+            <p>가격: {{ stuff.fee }}</p>
+            <p>내용: {{ stuff.desc }}</p>
+
+              <hr/>
+
+          <form id="booking-form" action="" method="POST">
+              {% csrf_token %}
+              <div class="input-div">
+                        <label for="id_rental_date">대여일 : </label>
+                        <input type="datetime-local" id="id_rental_date" name="rental_date">
+                    </div>
+
+                    <!-- Input Div -->
+                    <div class="input-div">
+                        <label for="id_return_date">반납일 : </label>
+                        <input type="datetime-local" id="id_return_date" name="return_date">
+                    </div>
+
+              <div class="input-div">
+              <button type="submit" class="btn btn-primary mb-3" style="background-color: #0E207F">빌리기</button>
+              </div>
+          </form>
+              <hr/>
+              <p>생성 시각: {{ stuff.created_at }}</p>
+              <p>수정 시각: {{ stuff.updated_at }}</p>
+
+    {% if stuff.author == request.user %}
+              <hr/>
+          <form action="" method="POST">
+              {{ stuff_available_form | crispy }}
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary mb-3" style="background-color: #0E207F">상태 변경</button>
+          </form>
+    {% endif %}
+
+          </div>
+      </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "bilyeo/base.html" %}
+{% load static %}
+
+{% block title %}Stuff List{% endblock %}
+
+{% block content %}
+
+    <br/>
+    <div class='container'>
+        <div class="row row-cols-6">
+            {%  for stuff in stuff_list %}
+            <div class="col">
+                <div class="card" style="width: 18rem;">
+                  <img src ="{{ stuff.image.url }}" alt = "{{ stuff.image }}">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ stuff.name }}</h5>
+                    <p class="card-text">{{ stuff.desc |truncatechars:30 }}</p>
+                    <a href="{% url 'bilyeo:stuff_detail' pk=stuff.pk %}" class="btn btn-primary" style="background-color: #0E207F">대여하기</a>
+                  </div>
+                </div>
+            <br/>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <br/>
+{% endblock %}
