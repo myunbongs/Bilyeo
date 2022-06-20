@@ -1,12 +1,15 @@
+from pyexpat.errors import messages
+
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, View
 from bilyeo.models import Stuff, Rental, Category
-from bilyeo.forms import AvailabilityForm, AcceptForm, StuffForm, StuffAvailableForm
+from bilyeo.forms import AvailabilityForm, AcceptForm, StuffForm
 from bilyeo.rental_functions.cal_rental_fee import find_total_rental_fee
 from bilyeo.rental_functions.availability import check_availability
+from django.contrib.auth.models import User
 
 def index(request):
     stuff_list = Stuff.objects.all()
@@ -38,7 +41,7 @@ class StuffCreateView(View):
                 name=data['name'],
                 image=data['image'],
                 desc=data['desc'],
-                status='a',
+                status=data['status'],
                 category=data['category'],
                 fee = data['fee'],
             )
@@ -66,11 +69,9 @@ class StuffDetailView(View):
         category_list = Category.objects.all()
 
         if stuff.author == self.request.user:
-            stuff_available_form = StuffAvailableForm()
             context = {
                 'stuff': stuff,
                 'form': form,
-                'stuff_available_form': stuff_available_form,
                 'category_list': category_list,
             }
 
@@ -85,6 +86,7 @@ class StuffDetailView(View):
     def post(self, request, *args, **kwargs):
         stuff = get_object_or_404(Stuff, pk=self.kwargs['pk'])
         form = AvailabilityForm(request.POST)
+
         if form.is_valid():
             data = form.cleaned_data
             if check_availability(stuff, data['rental_date'], data['return_date']):
@@ -106,6 +108,58 @@ class StuffDetailView(View):
         return HttpResponse(
             "<script>alert('유효하지 않은 전송입니다. :(');location.href='/stuff_list/';</script>")
 
+
+@method_decorator(login_required, name="dispatch")
+class StuffUpdateView(View):
+    def get(self, request, *args, **kwargs):
+        category_list = Category.objects.all()
+        form = StuffForm()
+        context = {
+            'form': form,
+            'category_list': category_list,
+        }
+        return render(request, 'bilyeo/stuff_update.html', context)
+
+    def post(self, request, *args, **kwargs):
+        stuff = get_object_or_404(Stuff, pk=self.kwargs['pk'])
+        form = StuffForm(request.POST, request.FILES)
+        if form.is_valid() and stuff.author == self.request.user:
+            data = form.cleaned_data
+
+            category = data['category']
+            if category == None:
+                stuff.category = None
+            else:
+                stuff.category = Category.objects.get(name=category)
+
+            stuff.name = data['name']
+            stuff.image = data['image']
+            stuff.desc = data['desc']
+            stuff.status = data['status']
+            stuff.fee = data['fee']
+
+            stuff.save()
+            return redirect('bilyeo:stuff_detail', pk=stuff.pk)
+        else:
+            return HttpResponse(
+                "<script>alert('해당 물품을 변경할 수 없습니다. 유효한 입력으로 시도해주세요. :)');location.href='/stuff_list/';</script>")
+        return HttpResponse(
+            "<script>alert('유효하지 않은 전송입니다. :(');location.href='/stuff_list/';</script>")
+
+@login_required
+def StuffDeleteView(request, pk):
+    stuff = get_object_or_404(Stuff, pk=pk)
+
+    if stuff.author != request.user:
+        return HttpResponse(
+                "<script>alert('작성자만 삭제 가능합니다. :(');location.href='/stuff_list/';</script>")
+    else:
+        stuff.delete()
+        return redirect('bilyeo:stuff_list')
+
+    return HttpResponse(
+            "<script>alert('해당 물품을 삭제할 수 없습니다. 유효한 입력으로 시도해주세요. :(');location.href='/stuff_list/';</script>")
+
 @method_decorator(login_required, name="dispatch")
 class RentalDetailView(View):
     def get(self, request, *args, **kwargs):
@@ -125,7 +179,7 @@ class RentalDetailView(View):
         form = AcceptForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            rental.user = rental.stuff.author
+            rental.user = rental.user
             rental.stuff = rental.stuff
             rental.status = data['status']
             rental.rental_date = rental.rental_date
@@ -134,9 +188,56 @@ class RentalDetailView(View):
             return redirect('bilyeo:rental_detail', pk=rental.pk)
         else:
             return HttpResponse(
-                "<script>alert('상태 변경에 실패했습니다! 유효한 입력으로 시도해주세요. :)');location.href='/rental/';" + rental.pk + "</script>")
+                "<script>alert('상태 변경에 실패했습니다! 유효한 입력으로 시도해주세요. :)');location.href='/rental/'" + rental.pk + ";</script>")
         return HttpResponse(
-            "<script>alert('상태 변경에 실패했습니다! 유효한 입력으로 시도해주세요. :)');location.href='/rental/';" + rental.pk + "</script>")
+            "<script>alert('상태 변경에 실패했습니다! 유효한 입력으로 시도해주세요. :)');location.href='/rental/'" + rental.pk + ";</script>")
+
+@method_decorator(login_required, name="dispatch")
+class RentalUpdateView(View):
+    def get(self, request, *args, **kwargs):
+        category_list = Category.objects.all()
+        form = AvailabilityForm()
+        context = {
+            'form': form,
+            'category_list': category_list,
+        }
+        return render(request, 'bilyeo/stuff_update.html', context)
+
+    def post(self, request, *args, **kwargs):
+        rental = get_object_or_404(Rental, pk=self.kwargs['pk'])
+        form = AvailabilityForm(request.POST, request.FILES)
+        if form.is_valid() and rental.stuff.author == self.request.user:
+            data = form.cleaned_data
+
+            if check_availability(rental.stuff, data['rental_date'], data['return_date']):
+                total_fee = find_total_rental_fee(data['rental_date'], data['return_date'], rental.stuff.pk)
+
+                rental.rental_date = data['rental_date']
+                rental.return_date = data['return_date']
+                rental.total_fee = total_fee
+
+                rental.save()
+                return redirect('bilyeo:rental_detail', pk=rental.pk)
+        else:
+            return HttpResponse(
+                "<script>alert('해당 대여를 변경할 수 없습니다! 유효한 입력으로 시도해주세요. :)');location.href='/rental/'" + rental.pk + ";</script>")
+        return HttpResponse(
+            "<script>alert('유효하지 않은 전송입니다. :(');location.href='/stuff_list/';</script>")
+
+
+@login_required
+def RentalDeleteView(request, pk):
+    rental = get_object_or_404(Rental, pk=pk)
+
+    if rental.user != request.user:
+        return HttpResponse(
+                "<script>alert('작성자만 삭제 가능합니다. :(');location.href='/stuff_list/';</script>")
+    else:
+        rental.delete()
+        return redirect('bilyeo:my_rental_list')
+
+    return HttpResponse(
+            "<script>alert('해당 대여를 삭제할 수 없습니다. 유효한 입력으로 시도해주세요. :(');location.href='/stuff_list/';</script>")
 
 @method_decorator(login_required, name="dispatch")
 class MyRentalListView(View):
@@ -162,6 +263,17 @@ class MyStuffListView(View):
             'category_list': category_list,
         }
         return render(request, 'bilyeo/my_stuff_list.html', context)
+
+class RequestRentalList(View):
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        request_list = Rental.objects.filter(stuff__author=user)
+        category_list = Category.objects.all()
+        context = {
+            'request_list': request_list,
+            'category_list': category_list,
+        }
+        return render(request, 'bilyeo/request_rental_list.html', context)
 
 
 class RentalList(ListView):

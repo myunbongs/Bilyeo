@@ -34,6 +34,7 @@
             <p>상태: {{ rental.get_status_display }}</p>
 
             <p>내용: {{ rental.stuff.desc }}</p>
+
     {% if rental.stuff.author == request.user %}
               <hr />
 
@@ -43,6 +44,13 @@
           <button type="submit" class="btn btn-primary mb-3" style="background-color: #0E207F">상태 변경</button>
       </form>
     {% endif %}
+
+    {% if rental.user == request.user %}
+              <hr/>
+          <a href="{% url 'bilyeo:rental_update' pk=rental.pk %}" class="btn btn-primary" style="background-color: #0E207F">수정하기</a>
+          <a href="{% url 'bilyeo:rental_delete' pk=rental.pk %}" class="btn btn-primary" style="background-color: red">삭제하기</a>
+    {% endif %}
+
           </div>
       </div>
     </div>

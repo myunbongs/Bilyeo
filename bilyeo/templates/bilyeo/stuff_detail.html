@@ -26,6 +26,7 @@
 
               <hr/>
 
+              {% if stuff.author != request.user %}
           <form id="booking-form" action="" method="POST">
               {% csrf_token %}
               <div class="input-div">
@@ -43,18 +44,17 @@
               <button type="submit" class="btn btn-primary mb-3" style="background-color: #0E207F">빌리기</button>
               </div>
           </form>
+              {% endif %}
+
               <hr/>
               <p>생성 시각: {{ stuff.created_at }}</p>
               <p>수정 시각: {{ stuff.updated_at }}</p>
 
-    {% if stuff.author == request.user %}
-              <hr/>
-          <form action="" method="POST">
-              {{ stuff_available_form | crispy }}
-              {% csrf_token %}
-              <button type="submit" class="btn btn-primary mb-3" style="background-color: #0E207F">상태 변경</button>
-          </form>
-    {% endif %}
+            {% if stuff.author == request.user %}
+                      <hr/>
+                  <a href="{% url 'bilyeo:stuff_update' pk=stuff.pk %}" class="btn btn-primary" style="background-color: #0E207F">수정하기</a>
+                  <a href="{% url 'bilyeo:stuff_delete' pk=stuff.pk %}" class="btn btn-primary" style="background-color: red">삭제하기</a>
+            {% endif %}
 
           </div>
       </div>

@@ -85,7 +85,16 @@
                   </ul>
                 </li>
 
-                <a class="nav-link" href="{% url 'bilyeo:my_rental_list' %}">대여 목록</a>
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    대여 관리
+                  </a>
+                  <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                    <li><a class="dropdown-item" href="{% url 'bilyeo:my_rental_list' %}">대여 목록</a></li>
+                      <li><a class="dropdown-item" href="{% url 'bilyeo:request_list' %}">요청 목록</a></li>
+                  </ul>
+                </li>
+
                 <a class="nav-link" href="{% url 'account:logout' %}">로그아웃</a>
                 {% else %}
                 <a class="nav-link" href="{% url 'account:signup' %}">회원가입</a>
